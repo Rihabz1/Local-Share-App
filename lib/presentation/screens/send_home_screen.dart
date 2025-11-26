@@ -23,8 +23,17 @@ class SendHomeScreen extends StatelessWidget {
               vertical: 6,
             ),
             decoration: BoxDecoration(
-              color: AppTheme.darkCard,
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.successGreen.withOpacity(0.15),
+                  AppTheme.successGreen.withOpacity(0.1),
+                ],
+              ),
               borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              border: Border.all(
+                color: AppTheme.successGreen.withOpacity(0.3),
+                width: 1,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -57,52 +66,94 @@ class SendHomeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Pick Files Card
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppTheme.spacingLarge),
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 64,
-                                height: 64,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryBlue.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(
-                                    AppTheme.radiusMedium,
+                      // Pick Files Card with gradient
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.primaryBlue.withOpacity(0.1),
+                              AppTheme.primaryBlue.withOpacity(0.05),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                          border: Border.all(
+                            color: AppTheme.primaryBlue.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Card(
+                          color: Colors.transparent,
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppTheme.spacingXLarge),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        AppTheme.primaryBlue.withOpacity(0.3),
+                                        AppTheme.primaryBlue.withOpacity(0.15),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusLarge,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.primaryBlue.withOpacity(0.3),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.upload_file_rounded,
+                                    size: 40,
+                                    color: AppTheme.primaryBlue,
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.upload_file_rounded,
-                                  size: 32,
-                                  color: AppTheme.primaryBlue,
+                                const SizedBox(height: AppTheme.spacingLarge),
+                                Text(
+                                  'Pick Files to Send',
+                                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: -0.5,
+                                      ),
                                 ),
-                              ),
-                              const SizedBox(height: AppTheme.spacingMedium),
-                              Text(
-                                'Pick Files to Send',
-                                style: Theme.of(context).textTheme.headlineSmall,
-                              ),
-                              const SizedBox(height: AppTheme.spacingSmall),
-                              Text(
-                                'Select photos, videos, documents, or any other file.',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: AppTheme.textSecondary,
+                                const SizedBox(height: AppTheme.spacingSmall),
+                                Text(
+                                  'Select photos, videos, documents, or any other file.',
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: AppTheme.textSecondary,
+                                        height: 1.5,
+                                      ),
+                                ),
+                                const SizedBox(height: AppTheme.spacingXLarge),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      fileProvider.pickFiles();
+                                    },
+                                    icon: const Icon(Icons.folder_open_rounded, size: 22),
+                                    label: const Text('Select Files', style: TextStyle(fontSize: 16, letterSpacing: 0.5)),
+                                    style: ElevatedButton.styleFrom(
+                                      elevation: 4,
+                                      shadowColor: AppTheme.primaryBlue.withOpacity(0.5),
                                     ),
-                              ),
-                              const SizedBox(height: AppTheme.spacingLarge),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    fileProvider.pickFiles();
-                                  },
-                                  icon: const Icon(Icons.folder_open_rounded),
-                                  label: const Text('Select Files'),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -113,11 +164,26 @@ class SendHomeScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(AppTheme.spacingMedium),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue.withOpacity(0.1),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.primaryBlue.withOpacity(0.12),
+                              AppTheme.primaryBlue.withOpacity(0.06),
+                            ],
+                          ),
                           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                           border: Border.all(
                             color: AppTheme.primaryBlue.withOpacity(0.3),
+                            width: 1.5,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withOpacity(0.1),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: Row(
                           children: [

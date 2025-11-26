@@ -36,32 +36,64 @@ class _NearbyDevicesScreenState extends State<NearbyDevicesScreen> {
                 padding: const EdgeInsets.all(AppTheme.spacingLarge),
                 child: Column(
                   children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.primaryBlue.withOpacity(0.1),
-                        border: Border.all(
-                          color: AppTheme.primaryBlue.withOpacity(0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 80,
-                          height: 80,
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Outer glow ring
+                        Container(
+                          width: 140,
+                          height: 140,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppTheme.primaryBlue.withOpacity(0.2),
-                          ),
-                          child: const Icon(
-                            Icons.devices_rounded,
-                            size: 40,
-                            color: AppTheme.primaryBlue,
+                            gradient: RadialGradient(
+                              colors: [
+                                AppTheme.primaryBlue.withOpacity(0.0),
+                                AppTheme.primaryBlue.withOpacity(0.1),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                        // Middle ring
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.primaryBlue.withOpacity(0.1),
+                            border: Border.all(
+                              color: AppTheme.primaryBlue.withOpacity(0.3),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryBlue.withOpacity(0.2),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    AppTheme.primaryBlue.withOpacity(0.3),
+                                    AppTheme.primaryBlue.withOpacity(0.15),
+                                  ],
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.devices_rounded,
+                                size: 40,
+                                color: AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppTheme.spacingMedium),
                     if (provider.isScanning) ...[
@@ -194,19 +226,34 @@ class _DeviceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingMedium),
-          child: Row(
-            children: [
+      elevation: 2,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingMedium),
+            child: Row(
+              children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue.withOpacity(0.15),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.primaryBlue.withOpacity(0.25),
+                      AppTheme.primaryBlue.withOpacity(0.15),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Icon(
                   Icons.smartphone_rounded,

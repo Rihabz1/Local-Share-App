@@ -77,27 +77,54 @@ class _TransferProgressScreenState extends State<TransferProgressScreen> {
                   padding: const EdgeInsets.all(AppTheme.spacingLarge),
                   child: Column(
                     children: [
-                      // Progress Circle
+                      // Progress Circle with glow
                       Stack(
                         alignment: Alignment.center,
                         children: [
+                          // Outer glow
+                          Container(
+                            width: 240,
+                            height: 240,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  AppTheme.primaryBlue.withOpacity(0.0),
+                                  AppTheme.primaryBlue.withOpacity(0.15),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Progress ring
                           SizedBox(
-                            width: 200,
-                            height: 200,
+                            width: 220,
+                            height: 220,
                             child: CircularProgressIndicator(
                               value: transfer.progress,
-                              strokeWidth: 12,
+                              strokeWidth: 14,
+                              strokeCap: StrokeCap.round,
                               backgroundColor: AppTheme.darkCard,
-                              valueColor: const AlwaysStoppedAnimation<Color>(
+                              valueColor: AlwaysStoppedAnimation<Color>(
                                 AppTheme.primaryBlue,
                               ),
                             ),
                           ),
-                          Text(
-                            '${(transfer.progress * 100).toInt()}%',
-                            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          // Percentage text with gradient
+                          ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              colors: [
+                                AppTheme.primaryBlue,
+                                AppTheme.primaryBlue.withOpacity(0.8),
+                              ],
+                            ).createShader(bounds),
+                            child: Text(
+                              '${(transfer.progress * 100).toInt()}%',
+                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: -2,
+                                  ),
+                            ),
                           ),
                         ],
                       ),

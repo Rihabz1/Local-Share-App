@@ -29,12 +29,20 @@ class _RootScaffoldState extends State<RootScaffold> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppTheme.darkCard,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppTheme.darkCard.withOpacity(0.95),
+              AppTheme.darkCard,
+            ],
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
+              spreadRadius: 2,
             ),
           ],
         ),
@@ -90,10 +98,26 @@ class _RootScaffoldState extends State<RootScaffold> {
             vertical: AppTheme.spacingSmall,
           ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppTheme.primaryBlue.withOpacity(0.15)
-                : Colors.transparent,
+            gradient: isSelected
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.primaryBlue.withOpacity(0.2),
+                      AppTheme.primaryBlue.withOpacity(0.1),
+                    ],
+                  )
+                : null,
             borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

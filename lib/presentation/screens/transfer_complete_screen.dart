@@ -21,19 +21,54 @@ class TransferCompleteScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Success Icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.successGreen.withOpacity(0.15),
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  size: 64,
-                  color: AppTheme.successGreen,
-                ),
+              // Success Icon with animation effect
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outer glow rings
+                  Container(
+                    width: 160,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.successGreen.withOpacity(0.1),
+                    ),
+                  ),
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.successGreen.withOpacity(0.15),
+                    ),
+                  ),
+                  // Main icon container
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppTheme.successGreen.withOpacity(0.3),
+                          AppTheme.successGreen.withOpacity(0.15),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.successGreen.withOpacity(0.4),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      size: 70,
+                      color: AppTheme.successGreen,
+                    ),
+                  ),
+                ],
               ),
               
               const SizedBox(height: AppTheme.spacingLarge),

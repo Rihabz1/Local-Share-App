@@ -57,17 +57,53 @@ class ReceiveScreen extends StatelessWidget {
                 if (provider.isReceiving) ...[
                   const SizedBox(height: AppTheme.spacingLarge),
                   
-                  // Device Address Card
-                  Card(
-                    color: AppTheme.primaryBlue.withOpacity(0.1),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppTheme.spacingLarge),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.wifi,
-                            size: 48,
-                            color: AppTheme.primaryBlue,
+                  // Device Address Card with gradient
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppTheme.primaryBlue.withOpacity(0.15),
+                          AppTheme.primaryBlue.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                      border: Border.all(
+                        color: AppTheme.primaryBlue.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryBlue.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Card(
+                      color: Colors.transparent,
+                      elevation: 0,
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppTheme.spacingXLarge),
+                        child: Column(
+                          children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  AppTheme.primaryBlue.withOpacity(0.2),
+                                  AppTheme.primaryBlue.withOpacity(0.05),
+                                ],
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.wifi,
+                              size: 48,
+                              color: AppTheme.primaryBlue,
+                            ),
                           ),
                           const SizedBox(height: AppTheme.spacingMedium),
                           Text(
@@ -105,6 +141,7 @@ class ReceiveScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                  ),
                   ),
                   
                   const SizedBox(height: AppTheme.spacingLarge),

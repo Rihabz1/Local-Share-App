@@ -173,10 +173,11 @@ class _HistoryTile extends StatelessWidget {
     final fileType = _getFileType(item.fileName);
     
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingMedium),
-        child: Row(
-          children: [
+      elevation: 1,
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingMedium),
+          child: Row(
+            children: [
             FileTypeIcon(type: fileType, size: 24),
             const SizedBox(width: AppTheme.spacingMedium),
             Expanded(
