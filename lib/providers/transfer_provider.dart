@@ -3,20 +3,21 @@ import 'package:flutter/foundation.dart';
 import '../domain/entities/transfer_entity.dart';
 import '../domain/entities/file_entity.dart';
 import '../domain/entities/device_entity.dart';
+import '../services/file_transfer_service.dart';
 
 class TransferProvider with ChangeNotifier {
   TransferEntity? _activeTransfer;
   Timer? _progressTimer;
-  int _currentFileIndex = 0;
+  final FileTransferService _transferService = FileTransferService();
 
   TransferEntity? get activeTransfer => _activeTransfer;
   bool get hasActiveTransfer => _activeTransfer != null;
 
-  void startTransfer({
+  Future<void> startTransfer({
     required List<FileEntity> files,
     required DeviceEntity device,
     required TransferDirection direction,
-  }) {
+  }) async {
     if (files.isEmpty) return;
 
     final totalBytes = files.fold<int>(0, (sum, file) => sum + file.size);
@@ -31,50 +32,53 @@ class TransferProvider with ChangeNotifier {
       totalBytes: totalBytes,
     );
 
-    _currentFileIndex = 0;
-    _simulateTransfer(files);
     notifyListeners();
-  }
 
-  void _simulateTransfer(List<FileEntity> files) {
-    // Simulate transfer with realistic progress updates
-    int elapsedMs = 0;
-    const updateIntervalMs = 100;
-    
-    _progressTimer = Timer.periodic(
-      const Duration(milliseconds: updateIntervalMs),
-      (timer) {
-        elapsedMs += updateIntervalMs;
+    // Setup callbacks for real transfer
+    _transferService.onProgress = (progress, speed) {
+      if (_activeTransfer == null) return;
+      
+      final transferred = (totalBytes * progress).toInt();
+      _activeTransfer = _activeTransfer!.copyWith(
+        transferredBytes: transferred,
+        progress: progress,
+        speed: speed,
+      );
+      notifyListeners();
+    };
 
-        if (_activeTransfer == null) {
-          timer.cancel();
-          return;
-        }
+    _transferService.onComplete = () {
+      _completeTransfer();
+    };
 
-        // Simulate speed between 5-10 MB/s
-        final speed = 6.2 * 1024 * 1024; // 6.2 MB/s
-        final increment = (speed * updateIntervalMs / 1000).toInt();
-        
-        final newTransferred = (_activeTransfer!.transferredBytes + increment)
-            .clamp(0, _activeTransfer!.totalBytes);
-        
-        final newProgress = newTransferred / _activeTransfer!.totalBytes;
-
+    _transferService.onError = (error) {
+      debugPrint('Transfer error: $error');
+      if (_activeTransfer != null) {
         _activeTransfer = _activeTransfer!.copyWith(
-          transferredBytes: newTransferred,
-          progress: newProgress,
-          speed: speed.toDouble(),
+          status: TransferStatus.failed,
         );
-
         notifyListeners();
+      }
+    };
 
-        // Complete transfer
-        if (newProgress >= 1.0) {
-          timer.cancel();
-          _completeTransfer();
-        }
-      },
-    );
+    try {
+      // Start actual file transfer
+      if (direction == TransferDirection.send) {
+        await _transferService.sendFiles(
+          device: device,
+          files: files,
+        );
+      }
+      // Receiving is handled by receive_provider
+    } catch (e) {
+      debugPrint('Error starting transfer: $e');
+      if (_activeTransfer != null) {
+        _activeTransfer = _activeTransfer!.copyWith(
+          status: TransferStatus.failed,
+        );
+        notifyListeners();
+      }
+    }
   }
 
   void _completeTransfer() {
@@ -99,14 +103,20 @@ class TransferProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void resumeTransfer(List<FileEntity> files) {
+  Future<void> resumeTransfer(List<FileEntity> files, DeviceEntity device) async {
     if (_activeTransfer == null) return;
 
     _activeTransfer = _activeTransfer!.copyWith(
       status: TransferStatus.inProgress,
     );
-    _simulateTransfer(files);
     notifyListeners();
+    
+    // Resume transfer
+    await startTransfer(
+      files: files,
+      device: device,
+      direction: _activeTransfer!.direction,
+    );
   }
 
   void cancelTransfer() {
@@ -134,6 +144,7 @@ class TransferProvider with ChangeNotifier {
   @override
   void dispose() {
     _progressTimer?.cancel();
+    _transferService.dispose();
     super.dispose();
   }
 }

@@ -45,5 +45,16 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>LocalShare needs access to your local network to discover nearby devices and transfer files.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_localshare._tcp</string>
+		<string>_localshare._udp</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 </dict>
 </plist>

@@ -23,7 +23,13 @@ class LocalShareApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DeviceDiscoveryProvider()),
         ChangeNotifierProvider(create: (_) => TransferProvider()),
         ChangeNotifierProvider(create: (_) => HistoryProvider()),
-        ChangeNotifierProvider(create: (_) => ReceiveProvider()),
+        ChangeNotifierProvider(
+          create: (_) {
+            final provider = ReceiveProvider();
+            provider.initialize(); // Initialize on app start
+            return provider;
+          },
+        ),
       ],
       child: MaterialApp(
         title: 'LocalShare',

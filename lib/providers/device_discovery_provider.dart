@@ -1,63 +1,63 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../domain/entities/device_entity.dart';
+import '../services/network_service.dart';
 
 class DeviceDiscoveryProvider with ChangeNotifier {
-  List<DeviceEntity> _nearbyDevices = [];
+  final List<DeviceEntity> _nearbyDevices = [];
   bool _isScanning = false;
   Timer? _scanTimer;
+  StreamSubscription<List<DeviceEntity>>? _devicesSubscription;
+  
+  final NetworkService _networkService = NetworkService();
 
   List<DeviceEntity> get nearbyDevices => _nearbyDevices;
   bool get isScanning => _isScanning;
 
-  void startScanning() {
+  Future<void> startScanning() async {
     if (_isScanning) return;
     
     _isScanning = true;
     _nearbyDevices.clear();
     notifyListeners();
 
-    // Simulate device discovery with mock devices
-    _scanTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      if (timer.tick >= 6) {
-        _isScanning = false;
-        timer.cancel();
-        notifyListeners();
-        return;
-      }
-
-      // Add mock devices progressively
-      if (timer.tick == 1) {
-        _nearbyDevices.add(DeviceEntity(
-          name: 'Redmi Note 12',
-          ip: '192.168.1.102',
-          port: 54321,
-        ));
-      } else if (timer.tick == 2) {
-        _nearbyDevices.add(DeviceEntity(
-          name: 'Sarah\'s MacBook Pro',
-          ip: '192.168.1.105',
-          port: 54321,
-        ));
-      } else if (timer.tick == 3) {
-        _nearbyDevices.add(DeviceEntity(
-          name: 'Living Room PC',
-          ip: '192.168.1.108',
-          port: 54321,
-        ));
-      } else if (timer.tick == 4) {
-        _nearbyDevices.add(DeviceEntity(
-          name: 'Galaxy Tab S8',
-          ip: '192.168.1.110',
-          port: 54321,
-        ));
-      }
+    try {
+      // Get device name
+      final deviceName = Platform.isWindows 
+          ? Platform.environment['COMPUTERNAME'] ?? 'Windows PC'
+          : Platform.isAndroid 
+              ? 'Android Device' 
+              : Platform.isIOS 
+                  ? 'iOS Device'
+                  : Platform.isMacOS
+                      ? 'Mac'
+                      : 'Unknown Device';
       
+      // Initialize network service
+      await _networkService.initialize(deviceName);
+      
+      // Listen to discovered devices
+      _devicesSubscription = _networkService.devicesStream.listen((devices) {
+        _nearbyDevices.clear();
+        _nearbyDevices.addAll(devices);
+        notifyListeners();
+      });
+      
+      // Start UDP discovery
+      await _networkService.startDiscovery();
+      
+      debugPrint('Started scanning for devices...');
+    } catch (e) {
+      debugPrint('Error starting scan: $e');
+      _isScanning = false;
       notifyListeners();
-    });
+    }
   }
 
   void stopScanning() {
+    _devicesSubscription?.cancel();
+    _networkService.stopDiscovery();
     _scanTimer?.cancel();
     _isScanning = false;
     notifyListeners();
@@ -65,7 +65,8 @@ class DeviceDiscoveryProvider with ChangeNotifier {
 
   @override
   void dispose() {
-    _scanTimer?.cancel();
+    stopScanning();
+    _networkService.dispose();
     super.dispose();
   }
 }

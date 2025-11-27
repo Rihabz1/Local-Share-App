@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/entities/history_entity.dart';
 import '../domain/entities/transfer_entity.dart';
 
@@ -12,64 +14,49 @@ class HistoryProvider with ChangeNotifier {
   List<HistoryEntity> _history = [];
   HistoryFilter _filter = HistoryFilter.all;
   String _searchQuery = '';
+  static const String _historyKey = 'transfer_history';
 
   List<HistoryEntity> get history => _filteredHistory;
   HistoryFilter get filter => _filter;
   String get searchQuery => _searchQuery;
 
   HistoryProvider() {
-    _loadMockHistory();
+    _loadHistory();
   }
 
-  void _loadMockHistory() {
-    // Mock history data for UI demonstration
-    _history = [
-      HistoryEntity(
-        id: '1',
-        fileName: 'vacation.jpg',
-        fileSize: 4718592,
-        deviceName: 'Redmi Note 12',
-        deviceIp: '192.168.1.102',
-        direction: TransferDirection.send,
-        timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
-      ),
-      HistoryEntity(
-        id: '2',
-        fileName: 'design-spec.pdf',
-        fileSize: 8601651,
-        deviceName: 'Sarah\'s MacBook Pro',
-        deviceIp: '192.168.1.105',
-        direction: TransferDirection.receive,
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-      HistoryEntity(
-        id: '3',
-        fileName: 'concert-footage.mov',
-        fileSize: 891289600,
-        deviceName: 'Living Room PC',
-        deviceIp: '192.168.1.108',
-        direction: TransferDirection.send,
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-      HistoryEntity(
-        id: '4',
-        fileName: 'new-ringtone.m4a',
-        fileSize: 768000,
-        deviceName: 'Galaxy Tab S8',
-        deviceIp: '192.168.1.110',
-        direction: TransferDirection.receive,
-        timestamp: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-      HistoryEntity(
-        id: '5',
-        fileName: 'archive.zip',
-        fileSize: 134217728,
-        deviceName: 'Redmi Note 12',
-        deviceIp: '192.168.1.102',
-        direction: TransferDirection.send,
-        timestamp: DateTime.now().subtract(const Duration(days: 7)),
-      ),
-    ];
+  Future<void> _loadHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = prefs.getString(_historyKey);
+      
+      if (historyJson != null) {
+        final List<dynamic> historyList = jsonDecode(historyJson);
+        _history = historyList
+            .map((json) => HistoryEntity.fromJson(json as Map<String, dynamic>))
+            .toList();
+        
+        // Sort by timestamp (newest first)
+        _history.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        
+        notifyListeners();
+        debugPrint('Loaded ${_history.length} history items');
+      }
+    } catch (e) {
+      debugPrint('Error loading history: $e');
+    }
+  }
+
+  Future<void> _saveHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = jsonEncode(
+        _history.map((item) => item.toJson()).toList(),
+      );
+      await prefs.setString(_historyKey, historyJson);
+      debugPrint('Saved ${_history.length} history items');
+    } catch (e) {
+      debugPrint('Error saving history: $e');
+    }
   }
 
   List<HistoryEntity> get _filteredHistory {
@@ -104,18 +91,21 @@ class HistoryProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void addHistory(HistoryEntity item) {
+  Future<void> addHistory(HistoryEntity item) async {
     _history.insert(0, item);
+    await _saveHistory();
     notifyListeners();
   }
 
-  void removeHistory(String id) {
+  Future<void> removeHistory(String id) async {
     _history.removeWhere((item) => item.id == id);
+    await _saveHistory();
     notifyListeners();
   }
 
-  void clearHistory() {
+  Future<void> clearHistory() async {
     _history.clear();
+    await _saveHistory();
     notifyListeners();
   }
 }

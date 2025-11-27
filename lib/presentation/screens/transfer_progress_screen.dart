@@ -297,6 +297,7 @@ class _TransferProgressScreenState extends State<TransferProgressScreen> {
                           onPressed: transfer.status == TransferStatus.paused
                               ? () => transferProvider.resumeTransfer(
                                     fileProvider.selectedFiles,
+                                    widget.device,
                                   )
                               : () => transferProvider.pauseTransfer(),
                           icon: Icon(
