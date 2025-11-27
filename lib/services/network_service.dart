@@ -99,6 +99,7 @@ class NetworkService {
   /// Broadcast presence to network
   void _broadcastPresence() {
     if (_socket == null || _localIpAddress == null || _deviceName == null) {
+      debugPrint('Cannot broadcast: socket=${_socket != null}, ip=$_localIpAddress, name=$_deviceName');
       return;
     }
     
@@ -113,11 +114,13 @@ class NetworkService {
     final data = utf8.encode(message);
     
     // Send to multicast address
-    _socket!.send(
+    final bytesSent = _socket!.send(
       data,
       InternetAddress(multicastAddress),
       discoveryPort,
     );
+    
+    debugPrint('Broadcasting: $_deviceName @ $_localIpAddress:$transferPort ($bytesSent bytes)');
   }
   
   /// Handle incoming UDP packets
@@ -128,30 +131,38 @@ class NetworkService {
       
       try {
         final message = utf8.decode(datagram.data);
+        debugPrint('Received UDP packet: $message');
         final data = jsonDecode(message) as Map<String, dynamic>;
         
         if (data['type'] == 'discovery') {
           final deviceIp = data['ipAddress'] as String;
+          final deviceName = data['deviceName'] as String;
+          
+          debugPrint('Discovery packet from: $deviceName @ $deviceIp');
           
           // Don't add ourselves
-          if (deviceIp == _localIpAddress) return;
+          if (deviceIp == _localIpAddress) {
+            debugPrint('Ignoring own broadcast');
+            return;
+          }
           
           // Create or update device
           final deviceId = deviceIp;
           final device = DeviceEntity(
-            name: data['deviceName'] as String,
+            name: deviceName,
             ip: deviceIp,
             port: data['port'] as int,
             isAvailable: true,
           );
           
           _discoveredDevices[deviceId] = device;
+          debugPrint('✓ Device added to list: $deviceName (${_discoveredDevices.length} total)');
           _devicesController.add(_discoveredDevices.values.toList());
           
-          debugPrint('Discovered device: ${device.name} at ${device.ip}');
+          debugPrint('✓ Discovered device: ${device.name} at ${device.ip}');
         }
       } catch (e) {
-        debugPrint('Error parsing discovery message: $e');
+        debugPrint('❌ Error parsing discovery message: $e');
       }
     }
   }

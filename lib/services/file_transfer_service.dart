@@ -64,14 +64,20 @@ class FileTransferService {
     _isCancelled = false;
     
     try {
+      debugPrint('=== STARTING FILE TRANSFER ===');
+      debugPrint('Target device: ${device.name}');
+      debugPrint('Target IP: ${device.ip}:${device.port}');
+      debugPrint('Files to send: ${files.length}');
+      
       // Connect to receiver
+      debugPrint('Attempting to connect...');
       _clientSocket = await Socket.connect(
         device.ip,
         device.port,
         timeout: const Duration(seconds: 10),
       );
       
-      debugPrint('Connected to ${device.name} at ${device.ip}:${device.port}');
+      debugPrint('✓ Connected to ${device.name} at ${device.ip}:${device.port}');
       
       int totalBytes = 0;
       for (var file in files) {

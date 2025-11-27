@@ -3,7 +3,7 @@ import 'package:file_picker/file_picker.dart' as picker;
 import '../domain/entities/file_entity.dart';
 
 class FilePickerProvider with ChangeNotifier {
-  List<FileEntity> _selectedFiles = [];
+  final List<FileEntity> _selectedFiles = [];
   List<FileEntity> _recentFiles = [];
 
   List<FileEntity> get selectedFiles => _selectedFiles;

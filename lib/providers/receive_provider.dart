@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../services/file_transfer_service.dart';
 import '../services/network_service.dart';
 import '../domain/entities/file_entity.dart';
+import '../core/utils/device_info_helper.dart';
 
 class ReceiveProvider with ChangeNotifier {
   bool _isReceiving = false;
@@ -20,16 +20,11 @@ class ReceiveProvider with ChangeNotifier {
   List<FileEntity> get receivedFiles => _receivedFiles;
 
   Future<void> initialize() async {
+    debugPrint('=== INITIALIZING RECEIVE PROVIDER ===');
+    
     // Get device name
-    final deviceName = Platform.isWindows 
-        ? Platform.environment['COMPUTERNAME'] ?? 'Windows PC'
-        : Platform.isAndroid 
-            ? 'Android Device' 
-            : Platform.isIOS 
-                ? 'iOS Device'
-                : Platform.isMacOS
-                    ? 'Mac'
-                    : 'Unknown Device';
+    final deviceName = await DeviceInfoHelper.getDeviceName();
+    debugPrint('Device name: $deviceName');
     
     await _networkService.initialize(deviceName);
     _localIp = _networkService.localIpAddress ?? 'Unknown';
@@ -49,11 +44,15 @@ class ReceiveProvider with ChangeNotifier {
 
   Future<void> _startServer() async {
     try {
+      debugPrint('=== STARTING RECEIVE MODE ===');
+      debugPrint('Local IP: $_localIp');
+      debugPrint('Port: $_port');
+      
       // Setup callbacks for file transfer service
       _transferService.onFileReceived = (file) {
         _receivedFiles.add(file);
         notifyListeners();
-        debugPrint('File received: ${file.name}');
+        debugPrint('\u2713 File received: ${file.name}');
       };
 
       _transferService.onProgress = (progress, speed) {
@@ -62,22 +61,26 @@ class ReceiveProvider with ChangeNotifier {
       };
 
       _transferService.onError = (error) {
-        debugPrint('Receive error: $error');
+        debugPrint('\u274c Receive error: $error');
       };
 
       _transferService.onComplete = () {
-        debugPrint('All files received');
+        debugPrint('\u2713 All files received');
       };
 
       // Start TCP server
+      debugPrint('Starting TCP server...');
       await _transferService.startServer();
+      debugPrint('\u2713 TCP server started');
       
       // Start broadcasting presence
+      debugPrint('Starting network discovery broadcast...');
       await _networkService.startDiscovery();
+      debugPrint('\u2713 Broadcasting presence');
       
-      debugPrint('Server started on $_localIp:$_port');
+      debugPrint('\u2713 Server fully started on $_localIp:$_port');
     } catch (e) {
-      debugPrint('Error starting server: $e');
+      debugPrint('\u274c Error starting server: $e');
       _isReceiving = false;
       notifyListeners();
     }
