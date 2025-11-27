@@ -4,10 +4,33 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/file_picker_provider.dart';
 import '../../domain/entities/file_entity.dart';
 import '../widgets/file_type_icon.dart';
+import '../../core/utils/network_info_helper.dart';
 import 'nearby_devices_screen.dart';
 
-class SendHomeScreen extends StatelessWidget {
+class SendHomeScreen extends StatefulWidget {
   const SendHomeScreen({super.key});
+
+  @override
+  State<SendHomeScreen> createState() => _SendHomeScreenState();
+}
+
+class _SendHomeScreenState extends State<SendHomeScreen> {
+  String _wifiName = 'Loading...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWifiInfo();
+  }
+
+  Future<void> _loadWifiInfo() async {
+    final wifiName = await NetworkInfoHelper.getWifiName();
+    if (mounted) {
+      setState(() {
+        _wifiName = wifiName;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,11 +67,13 @@ class SendHomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'My-WiFi-SSID',
+                  _wifiName,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppTheme.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -194,7 +219,9 @@ class SendHomeScreen extends StatelessWidget {
                             const SizedBox(width: AppTheme.spacingMedium),
                             Expanded(
                               child: Text(
-                                'Connected to My-WiFi-SSID\nFor best results, ensure all devices are connected to the same Wi-Fi network.',
+                                _wifiName == 'Not Connected'
+                                    ? 'Not connected to WiFi\nPlease connect to a Wi-Fi network to share files.'
+                                    : 'Connected to $_wifiName\nFor best results, ensure all devices are connected to the same Wi-Fi network.',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: AppTheme.textPrimary,
                                     ),
