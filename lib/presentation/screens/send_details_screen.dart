@@ -121,6 +121,17 @@ class SendDetailsScreen extends StatelessWidget {
                                       ],
                                     ),
                                   ),
+                                  const SizedBox(width: AppTheme.spacingSmall),
+                                  IconButton(
+                                    onPressed: () {
+                                      fileProvider.removeFile(file.id);
+                                    },
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: AppTheme.dangerRed,
+                                    ),
+                                    tooltip: 'Remove file',
+                                  ),
                                 ],
                               ),
                             ),
