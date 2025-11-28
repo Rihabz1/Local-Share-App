@@ -7,7 +7,7 @@ class DeviceEntity {
   DeviceEntity({
     required this.name,
     required this.ip,
-    this.port = 54321,
+    this.port = 37822,
     this.isAvailable = true,
   });
 
@@ -40,7 +40,7 @@ class DeviceEntity {
     return DeviceEntity(
       name: json['name'] as String,
       ip: json['ip'] as String,
-      port: json['port'] as int? ?? 54321,
+      port: json['port'] as int? ?? 37822,
       isAvailable: json['isAvailable'] as bool? ?? true,
     );
   }
