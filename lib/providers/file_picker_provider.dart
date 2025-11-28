@@ -50,6 +50,9 @@ class FilePickerProvider with ChangeNotifier {
         allowMultiple: true,
         type: picker.FileType.any,
         allowCompression: false,
+        withData: false,
+        withReadStream: false,
+        lockParentWindow: true,
       );
 
       if (result != null) {
