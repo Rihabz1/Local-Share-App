@@ -45,13 +45,17 @@ class FilePickerProvider with ChangeNotifier {
 
   Future<void> pickFiles() async {
     try {
+      debugPrint('Opening file picker with multiple selection enabled...');
       final result = await picker.FilePicker.platform.pickFiles(
         allowMultiple: true,
         type: picker.FileType.any,
+        allowCompression: false,
       );
 
       if (result != null) {
+        debugPrint('Files picked: ${result.files.length}');
         final newFiles = result.files.map((file) {
+          debugPrint('  - ${file.name} (${file.size} bytes)');
           return FileEntity(
             id: DateTime.now().millisecondsSinceEpoch.toString() + file.name,
             name: file.name,
@@ -62,7 +66,10 @@ class FilePickerProvider with ChangeNotifier {
         }).toList();
 
         _selectedFiles.addAll(newFiles);
+        debugPrint('Total selected files: ${_selectedFiles.length}');
         notifyListeners();
+      } else {
+        debugPrint('File picker cancelled');
       }
     } catch (e) {
       debugPrint('Error picking files: $e');
