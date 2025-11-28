@@ -14,6 +14,9 @@ class FileTransferService {
   ServerSocket? _serverSocket;
   Socket? _clientSocket;
   
+  // Buffer for reading socket data
+  final List<int> _receiveBuffer = [];
+  
   // Callbacks for progress tracking
   Function(double progress, double speed)? onProgress;
   Function(String error)? onError;
@@ -175,106 +178,104 @@ class FileTransferService {
   
   /// Handle incoming connection and receive files
   Future<void> _handleIncomingConnection(Socket client) async {
-    try {
-      int bytesReceived = 0;
-      final startTime = DateTime.now();
-      
-      // Receive number of files
-      final numFilesData = await _readBytes(client, 4);
-      final numFiles = _decodeInt32(numFilesData);
-      
-      debugPrint('Receiving $numFiles file(s)');
-      
-      // Receive each file
-      for (int i = 0; i < numFiles; i++) {
-        if (_isCancelled) {
-          throw Exception('Transfer cancelled');
+    _receiveBuffer.clear();
+    final completer = Completer<void>();
+    
+    client.listen(
+      (data) async {
+        _receiveBuffer.addAll(data);
+        debugPrint('Received ${data.length} bytes, buffer now ${_receiveBuffer.length} bytes');
+      },
+      onDone: () async {
+        try {
+          debugPrint('Connection closed, processing ${_receiveBuffer.length} bytes');
+          await _processReceivedData();
+          onComplete?.call();
+          debugPrint('All files received successfully');
+        } catch (e) {
+          debugPrint('Error processing files: $e');
+          onError?.call('Receive failed: $e');
         }
-        
-        await _receiveFile(client, i + 1, numFiles, bytesReceived, startTime);
-      }
-      
-      await client.close();
-      onComplete?.call();
-      
-      debugPrint('All files received successfully');
-    } catch (e) {
-      debugPrint('Error receiving files: $e');
-      onError?.call('Receive failed: $e');
-      await client.close();
-    }
+        completer.complete();
+      },
+      onError: (e) {
+        debugPrint('Socket error: $e');
+        onError?.call('Socket error: $e');
+        completer.complete();
+      },
+    );
+    
+    await completer.future;
   }
   
-  /// Receive a single file
-  Future<void> _receiveFile(
-    Socket client,
-    int fileIndex,
-    int totalFiles,
-    int previousBytes,
-    DateTime startTime,
-  ) async {
-    // Receive file name length
-    final fileNameLengthData = await _readBytes(client, 4);
-    final fileNameLength = _decodeInt32(fileNameLengthData);
+  /// Process all received data from buffer
+  Future<void> _processReceivedData() async {
+    if (_receiveBuffer.length < 4) {
+      throw Exception('Not enough data received');
+    }
     
-    // Receive file name
-    final fileNameData = await _readBytes(client, fileNameLength);
-    final fileName = String.fromCharCodes(fileNameData);
+    int offset = 0;
     
-    // Receive file size
-    final fileSizeData = await _readBytes(client, 8);
-    final fileSize = _decodeInt64(fileSizeData);
+    // Read number of files
+    final numFiles = _decodeInt32(Uint8List.fromList(_receiveBuffer.sublist(offset, offset + 4)));
+    offset += 4;
+    debugPrint('Processing $numFiles file(s)');
     
-    debugPrint('Receiving file $fileIndex/$totalFiles: $fileName ($fileSize bytes)');
+    final startTime = DateTime.now();
+    int totalReceived = 0;
     
-    // Get downloads directory
-    final directory = await _getDownloadsDirectory();
-    final filePath = path.join(directory.path, fileName);
-    final file = File(filePath);
-    
-    // Receive file data
-    final sink = file.openWrite();
-    int fileBytesReceived = 0;
-    
-    while (fileBytesReceived < fileSize) {
+    for (int i = 0; i < numFiles; i++) {
       if (_isCancelled) {
-        await sink.close();
         throw Exception('Transfer cancelled');
       }
       
-      final remaining = fileSize - fileBytesReceived;
-      final toRead = remaining < chunkSize ? remaining : chunkSize;
+      // Read file name length
+      final fileNameLength = _decodeInt32(Uint8List.fromList(_receiveBuffer.sublist(offset, offset + 4)));
+      offset += 4;
       
-      final chunk = await _readBytes(client, toRead);
-      sink.add(chunk);
-      fileBytesReceived += chunk.length;
+      // Read file name
+      final fileName = String.fromCharCodes(_receiveBuffer.sublist(offset, offset + fileNameLength));
+      offset += fileNameLength;
+      
+      // Read file size
+      final fileSize = _decodeInt64(Uint8List.fromList(_receiveBuffer.sublist(offset, offset + 8)));
+      offset += 8;
+      
+      debugPrint('File ${i + 1}/$numFiles: $fileName ($fileSize bytes)');
+      
+      // Read file data
+      final fileData = _receiveBuffer.sublist(offset, offset + fileSize);
+      offset += fileSize;
+      totalReceived += fileSize;
+      
+      // Save file
+      final directory = await _getDownloadsDirectory();
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+      final filePath = path.join(directory.path, fileName);
+      final file = File(filePath);
+      await file.writeAsBytes(fileData);
+      
+      debugPrint('File saved: $filePath');
       
       // Calculate progress
-      final totalReceived = previousBytes + fileBytesReceived;
       final elapsed = DateTime.now().difference(startTime).inMilliseconds;
       final speed = elapsed > 0 ? (totalReceived / elapsed) * 1000 : 0.0;
+      onProgress?.call((i + 1) / numFiles, speed.toDouble());
       
-      // For simplicity, we don't know total size ahead, so progress is per-file
-      final progress = fileBytesReceived / fileSize;
-      onProgress?.call(progress, speed.toDouble());
+      // Create FileEntity and notify
+      final extension = path.extension(fileName).replaceAll('.', '');
+      final receivedFile = FileEntity(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: fileName,
+        path: filePath,
+        size: fileSize,
+        type: FileType.fromExtension(extension),
+      );
+      
+      onFileReceived?.call(receivedFile);
     }
-    
-    await sink.flush();
-    await sink.close();
-    
-    debugPrint('File received: $filePath');
-    
-    // Create FileEntity and notify
-    final extension = path.extension(fileName).replaceAll('.', '');
-    final receivedFile = FileEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: fileName,
-      path: filePath,
-      size: fileSize,
-      type: FileType.fromExtension(extension),
-    );
-    
-    onFileReceived?.call(receivedFile);
   }
   
   /// Get downloads directory
@@ -296,22 +297,6 @@ class FileTransferService {
     
     // Fallback
     return Directory.systemTemp;
-  }
-  
-  /// Read exact number of bytes from socket
-  Future<Uint8List> _readBytes(Socket socket, int count) async {
-    final buffer = BytesBuilder();
-    
-    await for (var data in socket) {
-      buffer.add(data);
-      
-      if (buffer.length >= count) {
-        final bytes = buffer.takeBytes();
-        return Uint8List.fromList(bytes.sublist(0, count));
-      }
-    }
-    
-    throw Exception('Connection closed before receiving all data');
   }
   
   /// Encode int32 to bytes (big endian)

@@ -1,28 +1,14 @@
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:flutter/foundation.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
 
 /// Helper class to get network information
 class NetworkInfoHelper {
   static final NetworkInfo _networkInfo = NetworkInfo();
   
-  /// Get the WiFi SSID (network name)
+  /// Get the WiFi status
   static Future<String> getWifiName() async {
     try {
-      // On Android, we need location permission to get WiFi SSID
-      if (Platform.isAndroid) {
-        final status = await Permission.location.status;
-        if (!status.isGranted) {
-          debugPrint('Location permission not granted, requesting...');
-          final result = await Permission.location.request();
-          if (!result.isGranted) {
-            debugPrint('Location permission denied');
-            return 'Permission Required';
-          }
-        }
-      }
-      
+      // Try to get WiFi name (may not work on all platforms without permissions)
       final wifiName = await _networkInfo.getWifiName();
       debugPrint('WiFi name received: $wifiName');
       
@@ -31,19 +17,27 @@ class NetworkInfoHelper {
           wifiName.isNotEmpty && 
           wifiName != '<unknown ssid>' &&
           wifiName.toLowerCase() != 'unknown' &&
-          !wifiName.startsWith('0x')) {
+          !wifiName.startsWith('0x') &&
+          !wifiName.contains('unknown')) {
         return wifiName.replaceAll('"', '');
       }
       
-      // If we can't get SSID, just say "Connected" if we have an IP
+      // Check if we have an IP (means we're connected)
       final wifiIP = await _networkInfo.getWifiIP();
       if (wifiIP != null && wifiIP.isNotEmpty) {
-        return 'Connected';
+        return 'WiFi Connected';
       }
       
       return 'Not Connected';
     } catch (e) {
       debugPrint('Error getting WiFi name: $e');
+      // Check IP as fallback
+      try {
+        final wifiIP = await _networkInfo.getWifiIP();
+        if (wifiIP != null && wifiIP.isNotEmpty) {
+          return 'WiFi Connected';
+        }
+      } catch (_) {}
       return 'Unknown';
     }
   }
