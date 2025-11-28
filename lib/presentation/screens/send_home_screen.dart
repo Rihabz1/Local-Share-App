@@ -169,7 +169,12 @@ class _SendHomeScreenState extends State<SendHomeScreen> {
                                       fileProvider.pickFiles();
                                     },
                                     icon: const Icon(Icons.folder_open_rounded, size: 22),
-                                    label: const Text('Select Files', style: TextStyle(fontSize: 16, letterSpacing: 0.5)),
+                                    label: Text(
+                                      fileProvider.selectedFiles.isEmpty 
+                                        ? 'Select Files' 
+                                        : 'Add More Files',
+                                      style: const TextStyle(fontSize: 16, letterSpacing: 0.5),
+                                    ),
                                     style: ElevatedButton.styleFrom(
                                       elevation: 4,
                                       shadowColor: AppTheme.primaryBlue.withOpacity(0.5),

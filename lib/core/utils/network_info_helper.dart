@@ -26,15 +26,19 @@ class NetworkInfoHelper {
       final wifiName = await _networkInfo.getWifiName();
       debugPrint('WiFi name received: $wifiName');
       
-      // Remove quotes that iOS adds
-      if (wifiName != null && wifiName.isNotEmpty && wifiName != '<unknown ssid>') {
+      // Remove quotes that iOS adds and check for valid SSID
+      if (wifiName != null && 
+          wifiName.isNotEmpty && 
+          wifiName != '<unknown ssid>' &&
+          wifiName.toLowerCase() != 'unknown' &&
+          !wifiName.startsWith('0x')) {
         return wifiName.replaceAll('"', '');
       }
       
-      // Try getting IP to check if actually connected
+      // If we can't get SSID, just say "Connected" if we have an IP
       final wifiIP = await _networkInfo.getWifiIP();
       if (wifiIP != null && wifiIP.isNotEmpty) {
-        return 'Connected ($wifiIP)';
+        return 'Connected';
       }
       
       return 'Not Connected';

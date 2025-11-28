@@ -54,7 +54,13 @@ class FilePickerProvider with ChangeNotifier {
 
       if (result != null) {
         debugPrint('Files picked: ${result.files.length}');
-        final newFiles = result.files.map((file) {
+        
+        // Filter out duplicates by path
+        final existingPaths = _selectedFiles.map((f) => f.path).toSet();
+        
+        final newFiles = result.files
+            .where((file) => !existingPaths.contains(file.path))
+            .map((file) {
           debugPrint('  - ${file.name} (${file.size} bytes)');
           return FileEntity(
             id: DateTime.now().millisecondsSinceEpoch.toString() + file.name,
@@ -65,9 +71,13 @@ class FilePickerProvider with ChangeNotifier {
           );
         }).toList();
 
-        _selectedFiles.addAll(newFiles);
-        debugPrint('Total selected files: ${_selectedFiles.length}');
-        notifyListeners();
+        if (newFiles.isNotEmpty) {
+          _selectedFiles.addAll(newFiles);
+          debugPrint('Added ${newFiles.length} new files. Total selected files: ${_selectedFiles.length}');
+          notifyListeners();
+        } else {
+          debugPrint('No new files added (all were already selected)');
+        }
       } else {
         debugPrint('File picker cancelled');
       }
